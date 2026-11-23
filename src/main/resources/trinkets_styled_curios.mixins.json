@@ -1,0 +1,23 @@
+{
+  "required": true,
+  "package": "com.trinketsstyledcurios.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "InventoryMenuMixin",
+    "ServerGamePacketListenerImplMixin",
+    "AbstractContainerMenuAccessor",
+    "SlotAccessor"
+  ],
+  "client": [
+    "AbstractContainerScreenMixin",
+    "CuriosClientPacketsMixin",
+    "CreativeModeInventoryScreenMixin",
+    "CreativeSlotWrapperAccessor",
+    "EmiScreenManagerMixin",
+    "EmiScreenSpaceMixin",
+    "InventoryScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

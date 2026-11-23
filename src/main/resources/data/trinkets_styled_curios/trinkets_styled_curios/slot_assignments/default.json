@@ -1,0 +1,43 @@
+{
+  "replace": false,
+  "head": [
+    "head",
+    "hat",
+    "face",
+    "eyes",
+    "ears",
+    "glasses",
+    "mask",
+    "crown"
+  ],
+  "chest": [
+    "back",
+    "body",
+    "cape",
+    "charm",
+    "necklace",
+    "wings"
+  ],
+  "legs": [
+    "belt",
+    "legs",
+    "thigh"
+  ],
+  "feet": [
+    "feet",
+    "shoes",
+    "anklet",
+    "boots"
+  ],
+  "offhand": [
+    "hand",
+    "hands",
+    "glove",
+    "gloves",
+    "bracelet",
+    "ring",
+    "shield",
+    "offhand",
+    "curio"
+  ]
+}
