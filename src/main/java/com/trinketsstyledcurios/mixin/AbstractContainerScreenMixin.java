@@ -1,13 +1,19 @@
 /* Draws connected flyout frames and gives visible flyout slots priority over covered controls. */
 package com.trinketsstyledcurios.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.trinketsstyledcurios.client.DisplayedSlot;
 import com.trinketsstyledcurios.client.FlyoutHitTest;
 import com.trinketsstyledcurios.client.SlotUiState;
 import com.trinketsstyledcurios.inventory.AnchoredCurioSlot;
 import com.trinketsstyledcurios.inventory.VanillaAnchor;
 import com.trinketsstyledcurios.TrinketsStyledCurios;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
@@ -16,6 +22,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -23,6 +30,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
+
+import java.util.List;
+import java.util.Optional;
 
 @Mixin(AbstractContainerScreen.class)
 public abstract class AbstractContainerScreenMixin {
@@ -45,13 +55,40 @@ public abstract class AbstractContainerScreenMixin {
     private static final ResourceLocation TRINKETS_STYLED_CURIOS$MORE_SLOTS =
             ResourceLocation.fromNamespaceAndPath(TrinketsStyledCurios.MOD_ID, "textures/gui/more_slots.png");
 
-    @Inject(method = "renderSlot", at = @At("HEAD"))
-    private void trinketsStyledCurios$renderBackingAbovePlayer(GuiGraphics graphics, Slot slot,
-                                                               CallbackInfo callback) {
-        // Draw the panel above the player preview, then lower the pose for the slot item.
+    @Inject(method = "render", at = @At(value = "INVOKE",
+            target = "Lcom/mojang/blaze3d/systems/RenderSystem;disableDepthTest()V", ordinal = 0))
+    private void trinketsStyledCurios$renderRecipeBookBelowFlyout(GuiGraphics graphics, int mouseX, int mouseY,
+            float partialTick, CallbackInfo callback) {
+        // Wide Survival inventory renders the book after its slots by default. Draw it before
+        // the slot pass when a flyout is open so even widgets drawn without depth stay below it.
+        if ((Object) this instanceof InventoryScreen inventory && trinketsStyledCurios$hasActiveFlyout()) {
+            // Widget tooltips are also queued during render, before RecipeBookComponent.renderTooltip.
+            boolean covered = FlyoutHitTest.isOverActiveFlyout(mouseX, mouseY);
+            inventory.getRecipeBookComponent().render(graphics,
+                    covered ? Integer.MIN_VALUE : mouseX, covered ? Integer.MIN_VALUE : mouseY, partialTick);
+        }
+    }
+
+    @Unique
+    private static boolean trinketsStyledCurios$hasActiveFlyout() {
+        VanillaAnchor active = SlotUiState.activeAnchor();
+        return active != null && trinketsStyledCurios$hasVisibleSlots(active);
+    }
+
+    @WrapOperation(method = "render", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;renderSlot(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/inventory/Slot;)V"))
+    private void trinketsStyledCurios$renderFlyoutSlot(AbstractContainerScreen<?> screen, GuiGraphics graphics,
+                                                      Slot slot, Operation<Void> original) {
         VanillaAnchor anchor = trinketsStyledCurios$panelAnchor(slot);
-        if (anchor != null) {
-            graphics.pose().translate(0.0F, 0.0F, 310.0F);
+        if (anchor == null) {
+            original.call(screen, graphics, slot);
+            return;
+        }
+
+        graphics.pose().pushPose();
+        try {
+            // Use the original slot renderer so item decorations and drag previews stay intact.
+            graphics.pose().translate(0.0F, 0.0F, SlotUiState.FLYOUT_DEPTH + 310.0F);
             if (DisplayedSlot.curio(slot) != null) {
                 graphics.blit(TRINKETS_STYLED_CURIOS$BLANK_BACK,
                         slot.x, slot.y, 0, 0, 16, 16, 16, 16);
@@ -78,15 +115,64 @@ public abstract class AbstractContainerScreenMixin {
                         slot.x + 17, slot.y - 5, 22, 0, 4, 26, 256, 256);
             }
             graphics.pose().translate(0.0F, 0.0F, -240.0F);
+            original.call(screen, graphics, slot);
+        } finally {
+            graphics.pose().popPose();
         }
     }
 
-    @Inject(method = "renderSlot", at = @At("RETURN"))
-    private void trinketsStyledCurios$restoreItemDepth(GuiGraphics graphics, Slot slot,
-                                                       CallbackInfo callback) {
-        // Undo the remaining depth offset after Minecraft finishes rendering the slot.
-        if (trinketsStyledCurios$panelAnchor(slot) != null) {
-            graphics.pose().translate(0.0F, 0.0F, -70.0F);
+    @WrapOperation(method = "render", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;renderSlotHighlight(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/inventory/Slot;IIF)V"))
+    private void trinketsStyledCurios$renderFlyoutHighlight(AbstractContainerScreen<?> screen, GuiGraphics graphics,
+            Slot slot, int mouseX, int mouseY, float partialTick, Operation<Void> original) {
+        if (trinketsStyledCurios$panelAnchor(slot) == null) {
+            original.call(screen, graphics, slot, mouseX, mouseY, partialTick);
+            return;
+        }
+
+        graphics.pose().pushPose();
+        try {
+            graphics.pose().translate(0.0F, 0.0F, SlotUiState.FLYOUT_DEPTH + 311.0F);
+            original.call(screen, graphics, slot, mouseX, mouseY, partialTick);
+        } finally {
+            graphics.pose().popPose();
+        }
+    }
+
+    @WrapOperation(method = "render", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;renderFloatingItem(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V"))
+    private void trinketsStyledCurios$renderCarriedStack(AbstractContainerScreen<?> screen, GuiGraphics graphics,
+            ItemStack stack, int x, int y, String count, Operation<Void> original) {
+        if (!trinketsStyledCurios$hasActiveFlyout()) {
+            original.call(screen, graphics, stack, x, y, count);
+            return;
+        }
+
+        // Keep cursor stacks and returning stacks above the raised panel.
+        graphics.pose().pushPose();
+        try {
+            graphics.pose().translate(0.0F, 0.0F, SlotUiState.FLYOUT_DEPTH + 100.0F);
+            original.call(screen, graphics, stack, x, y, count);
+        } finally {
+            graphics.pose().popPose();
+        }
+    }
+
+    @WrapOperation(method = "renderTooltip", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/GuiGraphics;renderTooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;Ljava/util/Optional;Lnet/minecraft/world/item/ItemStack;II)V"))
+    private void trinketsStyledCurios$renderItemTooltipAboveFlyout(GuiGraphics graphics,
+            Font font, List<Component> lines, Optional<TooltipComponent> image,
+            ItemStack stack, int mouseX, int mouseY, Operation<Void> original) {
+        if (!trinketsStyledCurios$hasActiveFlyout()) {
+            original.call(graphics, font, lines, image, stack, mouseX, mouseY);
+            return;
+        }
+        graphics.pose().pushPose();
+        try {
+            graphics.pose().translate(0.0F, 0.0F, SlotUiState.FLYOUT_DEPTH);
+            original.call(graphics, font, lines, image, stack, mouseX, mouseY);
+        } finally {
+            graphics.pose().popPose();
         }
     }
 

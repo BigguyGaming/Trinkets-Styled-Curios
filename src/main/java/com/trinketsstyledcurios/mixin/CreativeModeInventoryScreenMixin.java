@@ -190,13 +190,14 @@ public abstract class CreativeModeInventoryScreenMixin
             if (tooltip.isEmpty()) {
                 tooltip.add(Component.literal(curio.getSlotName()));
             }
-            graphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
+            ClientTooltipHandler.renderSlotName(graphics, this.font, tooltip, mouseX, mouseY);
             return;
         }
 
         VanillaAnchor anchor = DisplayedSlot.anchor(this.hoveredSlot);
         if (anchor != null && this.hoveredSlot.getItem().isEmpty()) {
-            graphics.renderTooltip(this.font, ClientTooltipHandler.armorSlotName(anchor.equipmentSlot()),
+            ClientTooltipHandler.renderSlotName(graphics, this.font,
+                    List.of(ClientTooltipHandler.armorSlotName(anchor.equipmentSlot())),
                     mouseX, mouseY);
         }
     }

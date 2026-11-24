@@ -2,6 +2,8 @@
 package com.trinketsstyledcurios.client;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -10,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import top.theillusivec4.curios.api.CuriosApi;
 
+import java.util.List;
 import java.util.Locale;
 
 public final class ClientTooltipHandler {
@@ -44,6 +47,18 @@ public final class ClientTooltipHandler {
                 .withStyle(ChatFormatting.GOLD);
         line.append(armorSlotName(equipmentSlot).withStyle(ChatFormatting.YELLOW));
         event.getToolTip().add(Math.min(1, event.getToolTip().size()), line);
+    }
+
+    public static void renderSlotName(GuiGraphics graphics, Font font, List<Component> tooltip,
+                                      int mouseX, int mouseY) {
+        graphics.pose().pushPose();
+        try {
+            // Match the item tooltip layer so a wide flyout cannot cover its own label.
+            graphics.pose().translate(0.0F, 0.0F, SlotUiState.FLYOUT_DEPTH);
+            graphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
+        } finally {
+            graphics.pose().popPose();
+        }
     }
 
     public static MutableComponent armorSlotName(EquipmentSlot slot) {

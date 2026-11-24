@@ -50,6 +50,26 @@ public abstract class InventoryScreenMixin extends AbstractContainerScreen<Inven
                 && recipeBook.mouseClicked(mouseX, mouseY, button);
     }
 
+    @Redirect(method = "render", at = @At(value = "INVOKE", ordinal = 1,
+            target = "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookComponent;render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
+    private void trinketsStyledCurios$skipRecipeBookDrawnBelowFlyout(RecipeBookComponent recipeBook,
+            GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        VanillaAnchor active = SlotUiState.activeAnchor();
+        if (active == null || this.menu.slots.stream().noneMatch(slot ->
+                slot instanceof AnchoredCurioSlot curio && curio.anchor() == active && slot.isActive())) {
+            recipeBook.render(graphics, mouseX, mouseY, partialTick);
+        }
+    }
+
+    @Redirect(method = "render", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookComponent;renderTooltip(Lnet/minecraft/client/gui/GuiGraphics;IIII)V"))
+    private void trinketsStyledCurios$hideCoveredRecipeBookTooltip(RecipeBookComponent recipeBook,
+            GuiGraphics graphics, int guiLeft, int guiTop, int mouseX, int mouseY) {
+        if (!FlyoutHitTest.isOverActiveFlyout(mouseX, mouseY)) {
+            recipeBook.renderTooltip(graphics, guiLeft, guiTop, mouseX, mouseY);
+        }
+    }
+
     @Inject(method = "render", at = @At("HEAD"))
     private void trinketsStyledCurios$updateHoveredGroup(GuiGraphics graphics, int mouseX, int mouseY,
                                                          float partialTick, CallbackInfo callback) {
@@ -109,15 +129,15 @@ public abstract class InventoryScreenMixin extends AbstractContainerScreen<Inven
             if (tooltip.isEmpty()) {
                 tooltip.add(Component.literal(curioSlot.getSlotName()));
             }
-            graphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
+            ClientTooltipHandler.renderSlotName(graphics, this.font, tooltip, mouseX, mouseY);
             return;
         }
 
         int menuSlot = this.menu.slots.indexOf(this.hoveredSlot);
         VanillaAnchor anchor = VanillaAnchor.byMenuSlot(menuSlot);
         if (anchor != null && this.hoveredSlot.getItem().isEmpty()) {
-            graphics.renderTooltip(this.font,
-                    ClientTooltipHandler.armorSlotName(anchor.equipmentSlot()),
+            ClientTooltipHandler.renderSlotName(graphics, this.font,
+                    List.of(ClientTooltipHandler.armorSlotName(anchor.equipmentSlot())),
                     mouseX, mouseY);
         }
     }
