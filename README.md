@@ -22,11 +22,3 @@ be assigned to one of `head`, `chest`, `legs`, `feet`, or `offhand`:
 Files are merged in resource order. Set `replace` to `true` to clear assignments loaded before that
 file. Any identifier not assigned by a datapack always falls back to `offhand`; hand-related slots
 are assigned there by the bundled default datapack. Server assignments are synchronized to clients.
-
-## Development
-
-Use Java 21. Import the project as a Gradle project in IntelliJ IDEA, or run
-`./gradlew build` to build the JAR and `./gradlew runClient` to launch the development client.
-Gradle downloads the compile dependencies. Curios is required at runtime.
-EMI is optional. To test EMI compatibility in the development client, put its NeoForge
-1.21.1 JAR in `run/mods/`.
