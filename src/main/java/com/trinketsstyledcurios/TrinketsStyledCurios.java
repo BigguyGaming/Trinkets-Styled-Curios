@@ -2,6 +2,7 @@
 package com.trinketsstyledcurios;
 
 import com.mojang.logging.LogUtils;
+import com.trinketsstyledcurios.client.ClientConfig;
 import com.trinketsstyledcurios.client.ClientFirstLaunch;
 import com.trinketsstyledcurios.client.ClientTooltipHandler;
 import com.trinketsstyledcurios.data.SlotAssignmentReloadListener;
@@ -28,6 +29,7 @@ public final class TrinketsStyledCurios {
         NeoForge.EVENT_BUS.addListener(this::addReloadListeners);
         NeoForge.EVENT_BUS.addListener(this::syncDatapacks);
         if (FMLEnvironment.dist == Dist.CLIENT) {
+            ClientConfig.register(modContainer);
             modEventBus.addListener(ClientFirstLaunch::onClientSetup);
             NeoForge.EVENT_BUS.addListener(ClientTooltipHandler::onItemTooltip);
         }

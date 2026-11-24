@@ -5,6 +5,7 @@ import com.trinketsstyledcurios.client.FlyoutHitTest;
 import com.trinketsstyledcurios.client.SlotUiState;
 import com.trinketsstyledcurios.inventory.AnchoredCurioSlot;
 import com.trinketsstyledcurios.inventory.VanillaAnchor;
+import com.trinketsstyledcurios.client.ClientConfig;
 import com.trinketsstyledcurios.client.ClientTooltipHandler;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -90,7 +91,7 @@ public abstract class InventoryScreenMixin extends AbstractContainerScreen<Inven
                                                           float partialTick, CallbackInfo callback) {
         // Occupied slots use vanilla item tooltips. Supply a slot name only when the displayed stack is
         // empty.
-        if (this.minecraft == null || this.minecraft.player == null
+        if (!ClientConfig.showEmptySlotNames() || this.minecraft == null || this.minecraft.player == null
                 || !this.menu.getCarried().isEmpty() || this.hoveredSlot == null) {
             return;
         }

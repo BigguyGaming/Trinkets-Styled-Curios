@@ -17,6 +17,10 @@ public final class ClientTooltipHandler {
     }
 
     public static void onItemTooltip(ItemTooltipEvent event) {
+        if (!ClientConfig.showArmorItemSlots()) {
+            return;
+        }
+
         // Ask Minecraft where the stack equips so modded armor uses the same tooltip path.
         ItemStack stack = event.getItemStack();
         Player player = event.getEntity();

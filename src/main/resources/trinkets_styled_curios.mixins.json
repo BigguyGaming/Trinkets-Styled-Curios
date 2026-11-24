@@ -11,6 +11,7 @@
   "client": [
     "AbstractContainerScreenMixin",
     "CuriosClientPacketsMixin",
+    "CuriosItemTooltipMixin",
     "CreativeModeInventoryScreenMixin",
     "CreativeSlotWrapperAccessor",
     "EmiScreenManagerMixin",

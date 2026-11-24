@@ -3,5 +3,8 @@
   "trinkets_styled_curios.slot.chest": "Chestplate",
   "trinkets_styled_curios.slot.legs": "Leggings",
   "trinkets_styled_curios.slot.feet": "Boots",
-  "trinkets_styled_curios.slot.offhand": "Offhand"
+  "trinkets_styled_curios.slot.offhand": "Offhand",
+  "trinkets_styled_curios.configuration.showItemSlots": "Show slot names on items",
+  "trinkets_styled_curios.configuration.showArmorItemSlots": "Include armor slots on items",
+  "trinkets_styled_curios.configuration.showEmptySlotNames": "Show empty slot names on hover"
 }

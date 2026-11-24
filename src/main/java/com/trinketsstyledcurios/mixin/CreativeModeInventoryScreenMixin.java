@@ -1,6 +1,7 @@
 /* Adds Curios flyouts to Creative's Survival Inventory tab and synchronizes edits through the native Creative protocol. */
 package com.trinketsstyledcurios.mixin;
 
+import com.trinketsstyledcurios.client.ClientConfig;
 import com.trinketsstyledcurios.client.ClientTooltipHandler;
 import com.trinketsstyledcurios.client.DisplayedSlot;
 import com.trinketsstyledcurios.client.FlyoutHitTest;
@@ -170,8 +171,8 @@ public abstract class CreativeModeInventoryScreenMixin
                                                              float partialTick, CallbackInfo callback) {
         // Use Curios' slot tooltip for empty accessory slots and localized names for empty vanilla
         // anchors.
-        if (!trinketsStyledCurios$self().isInventoryOpen() || this.minecraft == null
-                || this.minecraft.player == null || !this.menu.getCarried().isEmpty()
+        if (!ClientConfig.showEmptySlotNames() || !trinketsStyledCurios$self().isInventoryOpen()
+                || this.minecraft == null || this.minecraft.player == null || !this.menu.getCarried().isEmpty()
                 || this.hoveredSlot == null) {
             return;
         }
